@@ -3,7 +3,6 @@ package tui
 import (
 	"bufio"
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -25,11 +24,13 @@ type profileData struct {
 }
 
 type testEntry struct {
-	Date time.Time
-	WPM  float64
-	Dur  int
-	Acc  float64
-	Mode string
+	Date   time.Time
+	WPM    float64
+	Dur    int
+	Acc    float64
+	Mode   string
+	Raw    float64
+	Errors int
 }
 
 func loadProfile() profileData {
@@ -63,11 +64,15 @@ func loadProfile() profileData {
 		pd.Tests++
 		pd.Time += time.Duration(e.Dur) * time.Second
 
-		if pd.Best[e.Mode] == nil {
-			pd.Best[e.Mode] = make(map[int]float64)
+		mode := e.Mode
+		if strings.HasPrefix(e.Mode, "code:") {
+			mode = "code"
 		}
-		if e.WPM > pd.Best[e.Mode][e.Dur] {
-			pd.Best[e.Mode][e.Dur] = e.WPM
+		if pd.Best[mode] == nil {
+			pd.Best[mode] = make(map[int]float64)
+		}
+		if e.WPM > pd.Best[mode][e.Dur] {
+			pd.Best[mode][e.Dur] = e.WPM
 		}
 		pd.Activity[e.Date.Format("2006-01-02")]++
 	}
@@ -123,7 +128,22 @@ func parseResultLine(line string) (testEntry, bool) {
 
 	modeStr := strings.TrimSpace(parts[4])
 
-	return testEntry{Date: date, WPM: wpm, Dur: dur, Acc: acc, Mode: modeStr}, true
+	var raw float64
+	var errors int
+	if len(parts) >= 6 {
+		rawStr := strings.TrimSpace(parts[5])
+		rawStr = strings.TrimSuffix(rawStr, "raw")
+		rawStr = strings.TrimSpace(rawStr)
+		raw, _ = strconv.ParseFloat(rawStr, 64)
+	}
+	if len(parts) >= 7 {
+		errStr := strings.TrimSpace(parts[6])
+		errStr = strings.TrimSuffix(errStr, "err")
+		errStr = strings.TrimSpace(errStr)
+		errors, _ = strconv.Atoi(errStr)
+	}
+
+	return testEntry{Date: date, WPM: wpm, Dur: dur, Acc: acc, Mode: modeStr, Raw: raw, Errors: errors}, true
 }
 
 func (m model) handleProfile(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -147,18 +167,51 @@ func cleanLegacyLang(lang string) string {
 	return lang
 }
 
+func rank(wpm float64) string {
+	switch {
+	case wpm >= 120:
+		return "phantom"
+	case wpm >= 80:
+		return "demon"
+	case wpm >= 50:
+		return "survivor"
+	case wpm >= 30:
+		return "warrior"
+	default:
+		return "grandma"
+	}
+}
+
+func (m model) bestRow(label string, data map[int]float64, dim, val, hi lipgloss.Style) string {
+	const cw = 5
+	const lw = 7
+	cells := []string{col(lw, hi.Render(label))}
+	for _, d := range []int{15, 30, 60, 120} {
+		if wpm, ok := data[d]; ok {
+			cells = append(cells, col(cw, val.Render(fmt.Sprintf("%.0f", wpm))))
+		} else {
+			cells = append(cells, col(cw, dim.Render("-")))
+		}
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Left, cells...)
+}
+
 func (m model) viewProfile(p theme.Palette) string {
 	dim := lipgloss.NewStyle().Foreground(p.Foreground)
 	val := lipgloss.NewStyle().Foreground(p.Typed).Bold(true)
 	hi := lipgloss.NewStyle().Foreground(p.Accent)
 
-	title := val.Render("_hello friend")
-
-	gridWidth := 74
-	if m.width > 0 && m.width < 80 {
-		gridWidth = m.width - 6
+	rankLabel := ""
+	if m.prof.Tests > 0 {
+		rankLabel = " · " + rank(m.prof.RecentAvg)
 	}
-	paneWidth := (gridWidth - 2) / 2
+	title := val.Render("_toofan" + rankLabel)
+
+	fullWidth := 76
+	if m.width > 0 && m.width < 82 {
+		fullWidth = m.width - 6
+	}
+	paneWidth := (fullWidth - 2) / 3 // 2 gaps of 1 char each
 
 	paneStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
@@ -177,16 +230,26 @@ func (m model) viewProfile(p theme.Palette) string {
 		avgStr = val.Render(fmt.Sprintf("%.0f wpm", m.prof.RecentAvg))
 	}
 
-	overviewInner := lipgloss.JoinVertical(lipgloss.Left,
+	avgAccStr := dim.Render("-")
+	if len(m.prof.Recent) > 0 {
+		var totalAcc float64
+		for _, e := range m.prof.Recent {
+			totalAcc += e.Acc
+		}
+		avgAccStr = val.Render(fmt.Sprintf("%.0f%%", totalAcc/float64(len(m.prof.Recent))))
+	}
+
+	overview := lipgloss.JoinVertical(lipgloss.Left,
 		hi.Render("overview"),
 		"",
-		dim.Render("tests       ")+val.Render(fmt.Sprintf("%d", m.prof.Tests)),
-		dim.Render("time        ")+val.Render(timeStr),
-		dim.Render("avg speed   ")+avgStr,
+		dim.Render("tests  ")+val.Render(fmt.Sprintf("%d", m.prof.Tests)),
+		dim.Render("time   ")+val.Render(timeStr),
+		dim.Render("avg    ")+avgStr,
+		dim.Render("acc    ")+avgAccStr,
 	)
 
-	cw := 5
-	lw := 6
+	const cw = 5
+	const lw = 7
 
 	durLabels := lipgloss.JoinHorizontal(lipgloss.Left,
 		col(lw, ""),
@@ -196,22 +259,10 @@ func (m model) viewProfile(p theme.Palette) string {
 		col(cw, dim.Render("120s")),
 	)
 
-	buildBestsLine := func(label string, data map[int]float64) string {
-		cells := []string{col(lw, hi.Render(label))}
-		for _, d := range []int{15, 30, 60, 120} {
-			if wpm, ok := data[d]; ok {
-				cells = append(cells, col(cw, val.Render(fmt.Sprintf("%.0f", wpm))))
-			} else {
-				cells = append(cells, col(cw, dim.Render("-")))
-			}
-		}
-		return lipgloss.JoinHorizontal(lipgloss.Left, cells...)
-	}
+	wordsLine := m.bestRow("words", m.prof.Best["words"], dim, val, hi)
+	codeLine := m.bestRow("code", m.prof.Best["code"], dim, val, hi)
 
-	wordsLine := buildBestsLine("words", m.prof.Best["words"])
-	codeLine := buildBestsLine("code", m.prof.Best["code"])
-
-	bestInner := lipgloss.JoinVertical(lipgloss.Left,
+	bests := lipgloss.JoinVertical(lipgloss.Left,
 		hi.Render("personal bests"),
 		"",
 		durLabels,
@@ -219,25 +270,60 @@ func (m model) viewProfile(p theme.Palette) string {
 		codeLine,
 	)
 
-	h1 := lipgloss.Height(overviewInner)
-	h2 := lipgloss.Height(bestInner)
-	if h1 < h2 {
-		overviewInner += strings.Repeat("\n", h2-h1)
-	} else if h2 < h1 {
-		bestInner += strings.Repeat("\n", h1-h2)
+	cur := rank(m.prof.RecentAvg)
+	type tier struct {
+		name string
+		wpm  int
+	}
+	tiers := []tier{
+		{"grandma", 0}, {"warrior", 30}, {"survivor", 50}, {"demon", 80}, {"phantom", 120},
 	}
 
-	overviewBox := paneStyle.Width(paneWidth).Render(overviewInner)
-	bestBox := paneStyle.Width(paneWidth).Render(bestInner)
-	topRow := lipgloss.JoinHorizontal(lipgloss.Top, overviewBox, "  ", bestBox)
+	var rankLines []string
+	for _, t := range tiers {
+		line := fmt.Sprintf("%-8s %3d+", t.name, t.wpm)
+		if t.name == cur {
+			rankLines = append(rankLines, hi.Render("●")+" "+val.Render(line))
+		} else {
+			rankLines = append(rankLines, dim.Render("○ "+line))
+		}
+	}
+
+	ranks := lipgloss.JoinVertical(lipgloss.Left,
+		hi.Render("ranks"),
+		"",
+		strings.Join(rankLines, "\n"),
+	)
+
+	// Render all boxes first to measure actual heights
+	overviewBox := paneStyle.Width(paneWidth).Render(overview)
+	bestBox := paneStyle.Width(paneWidth).Render(bests)
+	ranksBox := paneStyle.Width(paneWidth).Render(ranks)
+
+	// Match heights
+	maxH := lipgloss.Height(overviewBox)
+	if h := lipgloss.Height(bestBox); h > maxH {
+		maxH = h
+	}
+	if h := lipgloss.Height(ranksBox); h > maxH {
+		maxH = h
+	}
+
+	overviewBox = paneStyle.Width(paneWidth).Height(maxH - 2).Render(overview)
+	bestBox = paneStyle.Width(paneWidth).Height(maxH - 2).Render(bests)
+	ranksBox = paneStyle.Width(paneWidth).Height(maxH - 2).Render(ranks)
+
+	topRow := lipgloss.JoinHorizontal(lipgloss.Top, overviewBox, " ", bestBox, " ", ranksBox)
 
 	var histRows []string
 	header := lipgloss.JoinHorizontal(lipgloss.Left,
-		col(7, hi.Render("wpm")),
-		col(7, hi.Render("acc")),
+		col(6, hi.Render("wpm")),
+		col(6, hi.Render("raw")),
+		col(6, hi.Render("acc")),
+		col(5, hi.Render("err")),
 		col(7, hi.Render("type")),
-		col(10, hi.Render("lang")),
-		col(6, hi.Render("time")),
+		col(9, hi.Render("lang")),
+		col(6, hi.Render("dur")),
 		col(13, hi.Render("date")),
 	)
 	histRows = append(histRows, header, "")
@@ -264,17 +350,18 @@ func (m model) viewProfile(p theme.Palette) string {
 		}
 
 		row := lipgloss.JoinHorizontal(lipgloss.Left,
-			col(7, val.Render(fmt.Sprintf("%.0f", e.WPM))),
-			col(7, dim.Render(fmt.Sprintf("%.0f%%", e.Acc))),
+			col(6, val.Render(fmt.Sprintf("%.0f", e.WPM))),
+			col(6, dim.Render(fmt.Sprintf("%.0f", e.Raw))),
+			col(6, dim.Render(fmt.Sprintf("%.0f%%", e.Acc))),
+			col(5, dim.Render(fmt.Sprintf("%d", e.Errors))),
 			col(7, dim.Render(modeType)),
-			col(10, dim.Render(modeLang)),
+			col(9, dim.Render(modeLang)),
 			col(6, dim.Render(durStr)),
 			col(13, dim.Render(dstr)),
 		)
 		histRows = append(histRows, row)
 	}
 
-	fullWidth := paneWidth*2 + 2
 	histBox := paneStyle.Width(fullWidth).Render(
 		lipgloss.JoinVertical(lipgloss.Left,
 			hi.Render("recent tests"),
@@ -307,64 +394,37 @@ func (m model) viewProfile(p theme.Palette) string {
 
 func heatGrid(activity map[string]int, p theme.Palette, width int) string {
 	now := time.Now()
-
-	peak := 1
-	for _, n := range activity {
-		if n > peak {
-			peak = n
-		}
-	}
-
-	labels := []string{"mon", "tue", "wed", "thu", "fri", "sat", "sun"}
+	days := []string{"mon", "tue", "wed", "thu", "fri", "sat", "sun"}
 	dows := []time.Weekday{time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday, time.Saturday, time.Sunday}
 
 	c0 := lipgloss.NewStyle().Foreground(lipgloss.Color("#333333"))
-	c1 := lipgloss.NewStyle().Foreground(p.Foreground)
-	c2 := lipgloss.NewStyle().Foreground(p.Typed)
-	c3 := lipgloss.NewStyle().Foreground(p.Accent)
-	c4 := lipgloss.NewStyle().Foreground(p.Success).Bold(true)
-	colors := []lipgloss.Style{c0, c1, c2, c3, c4}
-
+	c1 := lipgloss.NewStyle().Foreground(p.Accent)
 	dim := lipgloss.NewStyle().Foreground(p.Foreground)
 
-	innerWidth := width - 4
-	weeks := (innerWidth - 5) / 2
+	weeks := (width - 14) / 2
 	if weeks < 1 {
 		weeks = 1
+	}
+	if weeks > 26 {
+		weeks = 26
 	}
 
 	var rows []string
 	for i, dow := range dows {
 		var row strings.Builder
-		row.WriteString(dim.Render(fmt.Sprintf("%3s  ", labels[i])))
-
+		row.WriteString(dim.Render(fmt.Sprintf("%3s  ", days[i])))
 		for w := weeks - 1; w >= 0; w-- {
 			d := now.AddDate(0, 0, -w*7)
 			for d.Weekday() != dow {
 				d = d.AddDate(0, 0, -1)
 			}
-
-			n := activity[d.Format("2006-01-02")]
-			idx := 0
-			if n > 0 {
-				idx = int(math.Ceil(float64(n) / float64(peak) * 4))
-				if idx > 4 {
-					idx = 4
-				}
+			if activity[d.Format("2006-01-02")] > 0 {
+				row.WriteString(c1.Render("■") + " ")
+			} else {
+				row.WriteString(c0.Render("■") + " ")
 			}
-			row.WriteString(colors[idx].Render("■") + " ")
 		}
 		rows = append(rows, row.String())
 	}
-
-	var legend strings.Builder
-	legend.WriteString(dim.Render("Less "))
-	legend.WriteString(colors[0].Render("■") + " ")
-	legend.WriteString(colors[1].Render("■") + " ")
-	legend.WriteString(colors[2].Render("■") + " ")
-	legend.WriteString(colors[3].Render("■") + " ")
-	legend.WriteString(colors[4].Render("■") + " ")
-	legend.WriteString(dim.Render("More"))
-
-	return strings.Join(rows, "\n") + "\n\n" + legend.String()
+	return strings.Join(rows, "\n")
 }

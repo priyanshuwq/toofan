@@ -97,7 +97,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.pb = game.GetPB(m.duration, m.mode)
 					m.gotNewPB = m.result.WPM > m.pb
 
-					game.SaveResult(m.result, m.duration, m.mode, m.lang)
+					durToSave := m.duration
+					if durToSave == 0 {
+						durToSave = m.game.TimeLeft()
+					}
+					game.SaveResult(m.result, durToSave, m.mode, m.lang)
 					if m.gotNewPB {
 						game.SavePB(m.duration, m.mode, m.result.WPM)
 					}
@@ -112,6 +116,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		})
 
 	case tea.KeyMsg:
+		if m.message != "" {
+			m.message = ""
+		}
+
 		if m.pickingRestore {
 			switch msg.String() {
 			case "up", "k":

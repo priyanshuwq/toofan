@@ -36,9 +36,9 @@ func SaveResult(s Stats, duration int, mode string, language string) {
 		label = "code:" + language
 	}
 
-	fmt.Fprintf(f, "%s | %3.0f wpm | %5.1f%% | %3ds | %s\n",
+	fmt.Fprintf(f, "%s | %3.0f wpm | %5.1f%% | %3ds | %s | %3.0f raw | %d err\n",
 		time.Now().Format("2006-01-02 15:04"),
-		s.WPM, s.Accuracy, duration, label,
+		s.WPM, s.Accuracy, duration, label, s.Raw, s.Mistakes,
 	)
 }
 

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -78,7 +79,12 @@ func (m model) viewResults(p theme.Palette) string {
 
 	timeStr := fmt.Sprintf("%ds", m.duration)
 	if m.duration == 0 {
-		timeStr = fmt.Sprintf("%ds", int(m.game.Stats().Chars/5/int(r.WPM)*60))
+		if r.WPM > 0 {
+			elapsed := float64(r.Chars) / 5.0 / r.WPM * 60.0
+			timeStr = fmt.Sprintf("%ds", int(math.Round(elapsed)))
+		} else {
+			timeStr = "0s"
+		}
 	}
 
 	errStr := val.Render("0")

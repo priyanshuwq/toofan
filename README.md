@@ -2,7 +2,7 @@
 
 # toofan
 
-**A minimal, lightning-fast typing test for your terminal**  
+**A minimal, lightning-fast typing TUI**  
 *Practice with english words or real code snippets. No browser, no account, everything stays local.*
 
 <br>

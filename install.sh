@@ -27,21 +27,41 @@ set -e
     mv /tmp/toofan "$INSTALL_DIR/toofan"
     echo "Installed to $INSTALL_DIR/toofan"
 
-    # Add alias for toofan binary to user's shell config
-    case "$SHELL" in
-        */bash) SHELL_CONFIG="$HOME/.bashrc" ;;
-        */zsh)  SHELL_CONFIG="$HOME/.zshrc" ;;
-        */fish) SHELL_CONFIG="$HOME/.config/fish/config.fish"; mkdir -p "$(dirname "$SHELL_CONFIG")" ;;
-        *)      SHELL_CONFIG="" ;;
-    esac
+    # Add ~/.local/bin to PATH if not already present
+    case "$PATH" in
+        *"$INSTALL_DIR"*) ;;
+        *)
+            SHELL_NAME="$(basename "$SHELL")"
+            case "$SHELL_NAME" in
+                bash)
+                    SHELL_CONFIG="$HOME/.bashrc"
+                    LINE='export PATH="$HOME/.local/bin:$PATH"'
+                    ;;
+                zsh)
+                    SHELL_CONFIG="$HOME/.zshrc"
+                    LINE='export PATH="$HOME/.local/bin:$PATH"'
+                    ;;
+                fish)
+                    SHELL_CONFIG="$HOME/.config/fish/config.fish"
+                    LINE='fish_add_path $HOME/.local/bin'
+                    mkdir -p "$(dirname "$SHELL_CONFIG")"
+                    ;;
+                *)
+                    SHELL_CONFIG=""
+                    ;;
+            esac
 
-    if [ -n "$SHELL_CONFIG" ]; then
-        if ! grep -qF "alias toofan=" "$SHELL_CONFIG" 2>/dev/null; then
-            printf '\n# toofan\nalias toofan="$HOME/.local/bin/toofan"\n' >> "$SHELL_CONFIG"
-        fi
-    else
-        echo "Add alias toofan=\"\$HOME/.local/bin/toofan\" to your shell config."
-    fi
+            if [ -n "$SHELL_CONFIG" ]; then
+                if ! grep -qF '.local/bin' "$SHELL_CONFIG" 2>/dev/null; then
+                    printf '\n# toofan\n%s\n' "$LINE" >> "$SHELL_CONFIG"
+                    echo "Added ~/.local/bin to PATH in $SHELL_CONFIG"
+                fi
+            else
+                echo "Unsupported shell: $SHELL_NAME"
+                echo "Search: \"how to add to PATH on $SHELL_NAME\" and add ~/.local/bin"
+            fi
+            ;;
+    esac
 
     export PATH="$INSTALL_DIR:$PATH"
     sleep 0.5

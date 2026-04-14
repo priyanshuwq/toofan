@@ -25,12 +25,25 @@ set -e
     INSTALL_DIR="$HOME/.local/bin"
     mkdir -p "$INSTALL_DIR"
     mv /tmp/toofan "$INSTALL_DIR/toofan"
-
     echo "Installed to $INSTALL_DIR/toofan"
-    
-    # Export it to PATH temporarily so it runs immediately
+
+    # Add alias for toofan binary to user's shell config
+    case "$SHELL" in
+        */bash) SHELL_CONFIG="$HOME/.bashrc" ;;
+        */zsh)  SHELL_CONFIG="$HOME/.zshrc" ;;
+        */fish) SHELL_CONFIG="$HOME/.config/fish/config.fish"; mkdir -p "$(dirname "$SHELL_CONFIG")" ;;
+        *)      SHELL_CONFIG="" ;;
+    esac
+
+    if [ -n "$SHELL_CONFIG" ]; then
+        if ! grep -qF "alias toofan=" "$SHELL_CONFIG" 2>/dev/null; then
+            printf '\n# toofan\nalias toofan="$HOME/.local/bin/toofan"\n' >> "$SHELL_CONFIG"
+        fi
+    else
+        echo "Add alias toofan=\"\$HOME/.local/bin/toofan\" to your shell config."
+    fi
+
     export PATH="$INSTALL_DIR:$PATH"
-    
     sleep 0.5
     toofan
 }

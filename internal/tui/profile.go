@@ -42,11 +42,11 @@ func loadProfile() profileData {
 	pd.Best["words"] = make(map[int]float64)
 	pd.Best["code"] = make(map[int]float64)
 
-	home, err := os.UserHomeDir()
+	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return pd
 	}
-	dataDir := filepath.Join(home, ".toofan")
+	dataDir := filepath.Join(configDir, "toofan")
 
 	f, err := os.Open(filepath.Join(dataDir, "results.txt"))
 	if err != nil {

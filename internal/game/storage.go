@@ -13,8 +13,8 @@ import (
 var dataDir string
 
 func init() {
-	home, _ := os.UserHomeDir()
-	dataDir = filepath.Join(home, ".toofan")
+	configDir, _ := os.UserConfigDir()
+	dataDir = filepath.Join(configDir, "toofan")
 }
 
 // SaveResult appends a line to results.txt — human readable
@@ -167,11 +167,7 @@ func SplitBundle(content string) map[string]string {
 }
 
 func SaveBackup() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	backupDir := filepath.Join(home, "Toofan")
+	backupDir := filepath.Join(dataDir, "backups")
 	os.MkdirAll(backupDir, 0755)
 
 	stamp := time.Now().Format("2006-01-02_15-04")
@@ -205,8 +201,7 @@ func RestoreBackup(src string) error {
 }
 
 func ListBackups() ([]string, string) {
-	home, _ := os.UserHomeDir()
-	backupDir := filepath.Join(home, "Toofan")
+	backupDir := filepath.Join(dataDir, "backups")
 	files, _ := filepath.Glob(filepath.Join(backupDir, "toofan_backup_*.txt"))
 	return files, backupDir
 }

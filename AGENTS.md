@@ -14,7 +14,7 @@ go run .               # run without building
 go vet ./...           # lint check before committing
 ```
 
-There are no external services, databases, or network calls. User data lives in `~/.toofan/` as plain text files.
+There are no external services, databases, or network calls. User data lives in `~/.config/toofan/` as plain text files.
 
 ## Project Structure
 
@@ -96,14 +96,14 @@ Place a `words.txt` inside a language's data directory. One word per line.
 
 ## Data Format
 
-Results are stored in `~/.toofan/results.txt`, one test per line:
+Results are stored in `~/.config/toofan/results.txt`, one test per line:
 
 ```
 2026-04-01 22:18 |  85 wpm | 97.5% | 30s | words | 83 raw | 2 err
 2026-04-01 22:20 |  54 wpm | 91.0% | 15s | code:go | 60 raw | 5 err
 ```
 
-Config is stored in `~/.toofan/config.txt` as key=value pairs:
+Config is stored in `~/.config/toofan/config.txt` as key=value pairs:
 
 ```
 duration=30
@@ -112,7 +112,7 @@ lang=go
 theme=tokyonight
 ```
 
-PBs are stored in `~/.toofan/pb.txt`:
+PBs are stored in `~/.config/toofan/pb.txt`:
 
 ```
 words-30=105

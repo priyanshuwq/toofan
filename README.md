@@ -87,7 +87,7 @@ accuracy = (total_chars - all_mistakes) / total_chars × 100
 <details>
 <summary>Where are my files stored?</summary>
 
-Everything lives in `~/.toofan/` as plain text files:
+Everything lives in `~/.config/toofan/` as plain text files:
 
 - `config.txt` : Your selected duration, mode, language, and theme
 - `results.txt` : Every test result (date, wpm, accuracy, duration, mode)
@@ -97,7 +97,7 @@ Everything lives in `~/.toofan/` as plain text files:
 <details>
 <summary>Can I backup my data?</summary>
 
-Yes. Press `ctrl+s` to save a backup and `ctrl+r` to restore from one. Backups are saved to `~/Toofan/` and can be moved between machines.
+Yes. Press `ctrl+s` to save a backup and `ctrl+r` to restore from one. Backups are saved to `~/.config/toofan/backups/` and can be moved between machines.
 </details>
 
 <details>
@@ -107,7 +107,7 @@ If you installed via the `curl` Quick Install, simply delete the binary and the 
 
 ```bash
 rm ~/.local/bin/toofan
-rm -rf ~/.toofan
+rm -rf ~/.config/toofan
 ```
 *(If you built it from source and moved it globally, run `sudo rm /usr/local/bin/toofan` instead).*
 </details>

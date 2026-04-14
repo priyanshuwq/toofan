@@ -36,6 +36,7 @@ func (g *Game) Input() string        { return g.input }
 func (g *Game) Errors() map[int]bool { return g.errors }
 func (g *Game) Started() bool        { return g.started }
 func (g *Game) Duration() int        { return g.duration }
+func (g *Game) Elapsed() time.Duration { return g.elapsed }
 func (g *Game) SetText(s string)     { g.text = normalizeTabs(s) }
 
 func New(duration int, mode string, language string) *Game {

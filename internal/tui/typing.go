@@ -139,8 +139,12 @@ func (m model) viewTyping(p theme.Palette) string {
 	var topLine string
 	if m.game.Started() {
 		timeLeft := m.game.TimeLeft()
-		wpm := m.game.Stats().WPM
-		topLine = hi.Render(fmt.Sprintf("%d", timeLeft)) + dim.Render(fmt.Sprintf("   %.0f wpm", wpm))
+		if m.game.Elapsed().Seconds() >= 3 {
+			wpm := m.game.Stats().WPM
+			topLine = hi.Render(fmt.Sprintf("%d", timeLeft)) + dim.Render(fmt.Sprintf("   %.0f wpm", wpm))
+		} else {
+			topLine = hi.Render(fmt.Sprintf("%d", timeLeft))
+		}
 	} else {
 		if m.duration == 0 {
 			topLine = hi.Render("∞")

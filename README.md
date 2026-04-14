@@ -54,7 +54,7 @@ If you prefer building manually (requires Go):
 git clone https://github.com/vyrx-dev/toofan.git
 cd toofan
 go build -o toofan .
-sudo mv toofan /usr/local/bin/toofan
+mv toofan ~/.local/bin/
 ```
 
 ## FAQ
@@ -110,11 +110,12 @@ Yes. Everything runs locally and is embedded in the binary. No internet needed.
 
 ## Roadmap
 
+- [x] Curl script installation (macOS & Linux)
+- [x] Proper documentation for AI and contributors
 - [ ] More language support (python, rust, c, typescript, etc.)
 - [ ] Difficulty levels for english words
-- [ ] AUR, Homebrew, Nix, and curl install
+- [ ] AUR, Homebrew, Nix packages
 - [ ] Fix top pane alignment to match bottom panes in profile
-- [ ] Proper documentation for AI and contributors to understand the project
 
 ## Contributing
 
@@ -122,6 +123,8 @@ Yes. Everything runs locally and is embedded in the binary. No internet needed.
 - New languages : Just a folder with lesson files
 - New themes : One Go file with a color palette
 - Bug fixes and UX improvements
+
+If you're using an AI coding assistant, read [`AGENTS.md`](AGENTS.md) first.
 
 ## Dependencies
 

@@ -72,31 +72,25 @@ Your typing history, personal bests, rank, and activity map all in one place. Pr
 
 ## Install
 
+**Quick Install (Mac / Linux):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/vyrx-dev/toofan/master/install.sh | sh
+```
+*(If you set up your subdomain redirect, you can change this to `curl -fsSL https://toofan.vyrx.dev | sh`)*
+
+<br>
+
+**Build from Source (Requires Go installed):**
 ```sh
 git clone https://github.com/vyrx-dev/toofan.git
 cd toofan
 go build -o toofan .
-./toofan
-```
-
-You can run it directly with `./toofan` after building, or move it to your PATH to run from anywhere:
-
-```sh
-# All shells
-sudo cp toofan /usr/local/bin/
-
-# Or add the directory manually:
-
-# bash / zsh (add to ~/.bashrc or ~/.zshrc)
-export PATH="$PATH:/path/to/toofan"
-
-# fish
-fish_add_path /path/to/toofan
+sudo mv toofan /usr/local/bin/toofan
 ```
 
 ### Package Managers
 
-Coming soon: AUR (paru/yay), Homebrew, Nix, one-line curl install.
+Coming soon: AUR (paru/yay), Homebrew, Nix.
 
 ## FAQ
 

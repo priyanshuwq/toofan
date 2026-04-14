@@ -57,18 +57,10 @@ func GetPB(duration int, mode string) float64 {
 			key := parts[0]
 			val, _ := strconv.ParseFloat(parts[1], 64)
 
-			if strings.Contains(key, "-") {
-				kp := strings.SplitN(key, "-", 2)
-				if kp[0] == mode {
-					dur, _ := strconv.Atoi(kp[1])
-					if dur == duration {
-						return val
-					}
-				}
-			} else {
-				// TODO: remove old format fallback once no users have pre-mode pb.txt files
-				dur, _ := strconv.Atoi(key)
-				if dur == duration && mode == "words" {
+			kp := strings.SplitN(key, "-", 2)
+			if len(kp) == 2 && kp[0] == mode {
+				dur, _ := strconv.Atoi(kp[1])
+				if dur == duration {
 					return val
 				}
 			}
@@ -206,13 +198,8 @@ func RestoreBackup(src string) error {
 	if err != nil {
 		return err
 	}
-	content := string(raw)
-	if strings.Contains(content, "### results.txt") {
-		for name, data := range SplitBundle(content) {
-			os.WriteFile(filepath.Join(dataDir, name), []byte(data), 0644)
-		}
-	} else {
-		os.WriteFile(filepath.Join(dataDir, "results.txt"), raw, 0644)
+	for name, data := range SplitBundle(string(raw)) {
+		os.WriteFile(filepath.Join(dataDir, name), []byte(data), 0644)
 	}
 	return nil
 }

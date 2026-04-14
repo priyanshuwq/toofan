@@ -167,16 +167,7 @@ func (m model) handleProfile(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func cleanLegacyLang(lang string) string {
-	for _, suffix := range []string{"15s", "30s", "60s", "120s"} {
-		lang = strings.TrimSuffix(lang, suffix)
-	}
-	switch lang {
-	case "javascript":
-		return "js"
-	case "typescript":
-		return "ts"
-	}
+func truncateLang(lang string) string {
 	if len(lang) > 9 {
 		return lang[:9]
 	}
@@ -395,7 +386,7 @@ func (m model) viewProfile(p theme.Palette) string {
 		modeLang := "english"
 		if strings.HasPrefix(e.Mode, "code:") {
 			modeType = "code"
-			modeLang = cleanLegacyLang(strings.TrimPrefix(e.Mode, "code:"))
+			modeLang = truncateLang(strings.TrimPrefix(e.Mode, "code:"))
 		}
 
 		durStr := "∞"

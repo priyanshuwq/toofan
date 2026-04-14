@@ -106,7 +106,7 @@ func cursorLine(lines []string, inputLen int) int {
 	return max(0, len(lines)-1)
 }
 
-// col renders text in a fixed-width column, handling ANSI escape codes correctly.
+// col renders text in a fixed-width column.
 func col(w int, s string) string {
 	return lipgloss.NewStyle().Width(w).Render(s)
 }

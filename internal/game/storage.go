@@ -205,5 +205,8 @@ func RestoreBackup(src string) error {
 func ListBackups() ([]string, string) {
 	backupDir := filepath.Join(dataDir, "backups")
 	files, _ := filepath.Glob(filepath.Join(backupDir, "toofan_backup_*.txt"))
+	for i, j := 0, len(files)-1; i < j; i, j = i+1, j-1 {
+		files[i], files[j] = files[j], files[i]
+	}
 	return files, backupDir
 }

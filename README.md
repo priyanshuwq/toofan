@@ -3,7 +3,7 @@
 # toofan
 
 **A minimal, lightning-fast typing TUI**  
-*Practice with english words or real code snippets. No browser, no account, everything stays local.*
+_Practice with english words or real code snippets. No browser, no account, everything stays local._
 
 <br>
 
@@ -43,25 +43,31 @@ A personal overview of your typing speed history, personal bests across duration
 ⚠️ **Note:** Always take a backup (`ctrl+s`) before updating toofan.
 
 ### curl (macOS & Linux)
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/vyrx-dev/toofan/master/install.sh | sh
 ```
 
 ### AUR
+
 ```bash
 paru -S toofan-bin
 ```
 
 ### Go
+
 ```bash
 go install github.com/vyrx-dev/toofan@latest
 ```
 
 ### Homebrew / Nix / Ubuntu / Fedora
+
 Coming soon.
 
 ### Build from Source
+
 If you prefer building manually (requires Go):
+
 ```sh
 git clone https://github.com/vyrx-dev/toofan.git
 cd toofan
@@ -100,6 +106,7 @@ Everything lives in `~/.config/toofan/` as plain text files:
 <summary>Can I backup my data?</summary>
 
 Yes. Press `ctrl+s` to save a backup and `ctrl+r` to restore from one. Backups are saved to `~/.config/toofan/backups/` and can be moved between machines.
+
 </details>
 
 <details>
@@ -109,20 +116,24 @@ The update process depends on how you installed it:
 
 **curl (Quick Install):**
 Just run the install command again. It will automatically download and replace the old binary.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/vyrx-dev/toofan/master/install.sh | sh
 ```
 
 **Go:**
+
 ```bash
 go install github.com/vyrx-dev/toofan@latest
 ```
 
 **AUR:**
 Use your AUR helper to update the package:
+
 ```bash
 paru -Syu toofan-bin
 ```
+
 </details>
 
 <details>
@@ -134,13 +145,23 @@ If you installed via the `curl` Quick Install, simply delete the binary and the 
 rm ~/.local/bin/toofan
 rm -rf ~/.config/toofan
 ```
-*(If you built it from source and moved it globally, run `sudo rm /usr/local/bin/toofan` instead).*
+
+_(If you built it from source and moved it globally, run `sudo rm /usr/local/bin/toofan` instead)._
+
 </details>
 
 <details>
 <summary>Does it work offline?</summary>
 
 Yes. Everything runs locally and is embedded in the binary. No internet needed.
+
+</details>
+
+<details>
+<summary>Want more programming languages?</summary>
+
+We're always looking to add more. If your favorite programming language isn't supported yet, open a PR with a few lesson files and we'll get it in. Check `AGENTS.md` for the file format.
+
 </details>
 
 ## Roadmap
@@ -150,7 +171,7 @@ Yes. Everything runs locally and is embedded in the binary. No internet needed.
 - [ ] More language support (python, rust, c, typescript, etc.)
 - [x] Difficulty levels for english words
 - [ ] AUR, Homebrew, Nix packages
-- [x] Fix top pane alignment to match bottom panes in profile
+- [ ] Fix top pane alignment to match bottom panes in profile
 
 ## Contributing
 
@@ -165,7 +186,9 @@ If you're using an AI coding assistant, read [`AGENTS.md`](AGENTS.md) first.
 
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea) : TUI framework
 - [Lipgloss](https://github.com/charmbracelet/lipgloss) : Terminal styling
+
 ---
+
 <a href="https://www.star-history.com/#vyrx-dev/toofan&type=date&legend=top-left">
  <picture>
    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=vyrx-dev/toofan&type=date&theme=dark&legend=top-left" />

@@ -105,6 +105,10 @@ func (g *Game) TypeChar(ch rune) {
 		return
 	}
 
+	if g.CodeMode && ch == '\n' && g.text[pos] != '\n' {
+		return
+	}
+
 	g.input += string(ch)
 	if g.text[pos] != byte(ch) {
 		g.errors[pos] = true
@@ -115,6 +119,9 @@ func (g *Game) TypeChar(ch rune) {
 	for len(g.input) < len(g.text) {
 		next := g.text[len(g.input)]
 		if next == '\n' {
+			if g.CodeMode {
+				break
+			}
 			g.input += "\n"
 		} else if next == ' ' && isStartOfLine(g.input) {
 			g.input += " "
@@ -123,6 +130,7 @@ func (g *Game) TypeChar(ch rune) {
 		}
 	}
 }
+
 
 func (g *Game) Backspace() {
 	if len(g.input) == 0 {

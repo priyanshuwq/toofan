@@ -91,6 +91,9 @@ func (m model) handleTyping(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+	case "enter":
+		m.game.TypeChar('\n')
+
 	case "backspace":
 		m.game.Backspace()
 

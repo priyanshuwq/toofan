@@ -194,22 +194,23 @@ func (m model) viewProfile(p theme.Palette) string {
 	val := lipgloss.NewStyle().Foreground(p.Typed).Bold(true)
 	hi := lipgloss.NewStyle().Foreground(p.Accent)
 
-	title := val.Render("_toofan")
-
 	fullWidth := 86
 	if m.width > 0 && m.width < 92 {
 		fullWidth = m.width - 6
 	}
-	paneWidth := (fullWidth - 4) / 3 // 2 gaps of 1 char each
+	paneWidth := fullWidth / 3
+
+	title := val.Render("_toofan")
 
 	paneStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(p.Foreground).
 		Padding(1, 2)
 
-	innerWidth := paneWidth - 6
-	if innerWidth < 20 {
-		innerWidth = 20
+	borderSample := paneStyle.Width(paneWidth).Render("")
+	borderWidth := lipgloss.Width(borderSample) - paneWidth
+	if borderWidth < 0 {
+		borderWidth = 0
 	}
 
 	hours := int(m.prof.Time.Hours())
@@ -358,7 +359,12 @@ func (m model) viewProfile(p theme.Palette) string {
 	bestBox = paneStyle.Width(paneWidth).Height(maxH - 2).Render(bests)
 	ranksBox = paneStyle.Width(paneWidth).Height(maxH - 2).Render(ranks)
 
-	topRow := lipgloss.JoinHorizontal(lipgloss.Top, overviewBox, " ", bestBox, " ", ranksBox)
+	topRow := lipgloss.JoinHorizontal(lipgloss.Top, overviewBox, bestBox, ranksBox)
+	rowWidth := lipgloss.Width(topRow)
+	wideBoxWidth := rowWidth - borderWidth
+	if wideBoxWidth < 0 {
+		wideBoxWidth = rowWidth
+	}
 
 	var histRows []string
 	header := lipgloss.JoinHorizontal(lipgloss.Left,
@@ -407,7 +413,7 @@ func (m model) viewProfile(p theme.Palette) string {
 		histRows = append(histRows, row)
 	}
 
-	histBox := paneStyle.Width(fullWidth).Render(
+	histBox := paneStyle.Width(wideBoxWidth).Render(
 		lipgloss.JoinVertical(lipgloss.Left,
 			hi.Render("recent tests"),
 			"",
@@ -415,8 +421,8 @@ func (m model) viewProfile(p theme.Palette) string {
 		),
 	)
 
-	heatmapStr := heatGrid(m.prof.Activity, p, fullWidth)
-	heatBox := paneStyle.Width(fullWidth).Render(
+	heatmapStr := heatGrid(m.prof.Activity, p, wideBoxWidth)
+	heatBox := paneStyle.Width(wideBoxWidth).Render(
 		lipgloss.JoinVertical(lipgloss.Left,
 			hi.Render("activity map"),
 			"",

@@ -105,8 +105,17 @@ func (g *Game) TypeChar(ch rune) {
 		return
 	}
 
-	if g.CodeMode && ch == '\n' && g.text[pos] != '\n' {
-		return
+	if g.CodeMode {
+		if g.text[pos] == '\n' {
+			if ch == ' ' {
+				ch = '\n' // allow space to act as enter at the end of a line
+			}
+			if ch != '\n' {
+				return // strict newline enforcement
+			}
+		} else if ch == '\n' {
+			return
+		}
 	}
 
 	g.input += string(ch)
@@ -143,6 +152,9 @@ func (g *Game) Backspace() {
 	for len(g.input) > 0 {
 		last := g.input[len(g.input)-1]
 		if last == '\n' {
+			if g.CodeMode {
+				break
+			}
 			g.input = g.input[:len(g.input)-1]
 		} else if last == ' ' && isStartOfLine(g.input[:len(g.input)-1]) {
 			g.input = g.input[:len(g.input)-1]

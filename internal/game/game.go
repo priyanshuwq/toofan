@@ -105,8 +105,13 @@ func (g *Game) TypeChar(ch rune) {
 		return
 	}
 
-	if g.CodeMode && ch == '\n' && g.text[pos] != '\n' {
-		return
+	if g.CodeMode {
+		if ch == '\n' && g.text[pos] != '\n' {
+			return
+		}
+		if g.text[pos] == '\n' && ch != '\n' {
+			return
+		}
 	}
 
 	g.input += string(ch)

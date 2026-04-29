@@ -148,6 +148,9 @@ func (g *Game) Backspace() {
 	for len(g.input) > 0 {
 		last := g.input[len(g.input)-1]
 		if last == '\n' {
+			if g.CodeMode {
+				break
+			}
 			g.input = g.input[:len(g.input)-1]
 		} else if last == ' ' && isStartOfLine(g.input[:len(g.input)-1]) {
 			g.input = g.input[:len(g.input)-1]

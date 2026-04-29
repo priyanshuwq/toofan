@@ -78,11 +78,18 @@ func (m model) handleTyping(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-	case "ctrl+h", "?":
+	case "ctrl+h":
 		if !m.game.Started() {
 			m.showHelp = true
 			return m, nil
 		}
+
+	case "?":
+		if !m.game.Started() {
+			m.showHelp = true
+			return m, nil
+		}
+		m.game.TypeChar('?')
 
 	case "ctrl+p":
 		if !m.game.Started() {
@@ -98,8 +105,8 @@ func (m model) handleTyping(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.game.Backspace()
 
 	default:
-		if len(msg.Runes) > 0 {
-			m.game.TypeChar(msg.Runes[0])
+		for _, r := range msg.Runes {
+			m.game.TypeChar(r)
 		}
 	}
 

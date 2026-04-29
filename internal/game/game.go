@@ -106,10 +106,14 @@ func (g *Game) TypeChar(ch rune) {
 	}
 
 	if g.CodeMode {
-		if ch == '\n' && g.text[pos] != '\n' {
-			return
-		}
-		if g.text[pos] == '\n' && ch != '\n' {
+		if g.text[pos] == '\n' {
+			if ch == ' ' {
+				ch = '\n' // allow space to act as enter at the end of a line
+			}
+			if ch != '\n' {
+				return // strict newline enforcement
+			}
+		} else if ch == '\n' {
 			return
 		}
 	}
